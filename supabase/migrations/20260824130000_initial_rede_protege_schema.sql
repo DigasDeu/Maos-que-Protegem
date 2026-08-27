@@ -220,6 +220,8 @@ create trigger on_auth_user_created
 after insert on auth.users
 for each row execute function public.handle_new_auth_user();
 
+revoke execute on function public.handle_new_auth_user() from public, anon, authenticated;
+
 create or replace function public.current_role()
 returns text
 language sql
@@ -265,6 +267,18 @@ as $$
     or public.current_role() = 'supervisor_caso'
 $$;
 
+revoke execute on function public.current_profile() from public, anon;
+revoke execute on function public.current_role() from public, anon;
+revoke execute on function public.current_unit_id() from public, anon;
+revoke execute on function public.is_admin() from public, anon;
+revoke execute on function public.can_access_protocol(public.protocolos) from public, anon;
+
+grant execute on function public.current_profile() to authenticated;
+grant execute on function public.current_role() to authenticated;
+grant execute on function public.current_unit_id() to authenticated;
+grant execute on function public.is_admin() to authenticated;
+grant execute on function public.can_access_protocol(public.protocolos) to authenticated;
+
 alter table public.usuarios enable row level security;
 alter table public.unidades enable row level security;
 alter table public.protocolos enable row level security;
@@ -272,6 +286,15 @@ alter table public.encaminhamentos enable row level security;
 alter table public.notificacoes enable row level security;
 alter table public.auditoria enable row level security;
 alter table public.configuracoes enable row level security;
+
+grant usage on schema public to authenticated;
+grant select, insert, update on public.usuarios to authenticated;
+grant select, insert, update, delete on public.unidades to authenticated;
+grant select, insert, update, delete on public.protocolos to authenticated;
+grant select, insert, update, delete on public.encaminhamentos to authenticated;
+grant select, insert, update, delete on public.notificacoes to authenticated;
+grant select, insert on public.auditoria to authenticated;
+grant select, insert, update on public.configuracoes to authenticated;
 
 drop policy if exists usuarios_select on public.usuarios;
 create policy usuarios_select on public.usuarios
@@ -321,6 +344,11 @@ create policy protocolos_update_competence on public.protocolos
 for update to authenticated
 using (public.can_access_protocol(protocolos))
 with check (public.can_access_protocol(protocolos));
+
+drop policy if exists protocolos_delete_admin on public.protocolos;
+create policy protocolos_delete_admin on public.protocolos
+for delete to authenticated
+using (public.is_admin());
 
 drop policy if exists encaminhamentos_access on public.encaminhamentos;
 create policy encaminhamentos_access on public.encaminhamentos
