@@ -6,7 +6,11 @@
   <meta name="theme-color" content="#1554d1">
   <meta name="description" content="Rede Protege Maués — sistema municipal de acompanhamento intersetorial.">
   <title>Login | Rede Protege Maués</title>
-  <link rel="stylesheet" href="/css/styles.css">
+  <script>
+    window.RPM_BASE_PATH = location.hostname.endsWith('github.io') ? '/Maos-que-Protegem/' : '/';
+    document.write('<base href="' + window.RPM_BASE_PATH + '">');
+  </script>
+  <link rel="stylesheet" href="css/styles.css">
   <script src="https://unpkg.com/lucide@latest" defer></script>
 </head>
 <body>
@@ -15,6 +19,6 @@
   <div id="toast-root" class="toast-root" aria-live="polite"></div>
   
   
-  <script type="module" src="/js/app.js"></script>
+  <script type="module" src="js/app.js"></script>
 </body>
 </html>

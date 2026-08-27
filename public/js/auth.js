@@ -227,7 +227,7 @@ export async function sendRemotePasswordReset(email) {
   const context = await supabaseContext();
   if (!context) return false;
   const { error } = await context.client.auth.resetPasswordForEmail(normalizeEmail(email), {
-    redirectTo: `${window.location.origin}/login.html`
+    redirectTo: new URL('login.html', document.baseURI).href
   });
   if (error) throw error;
   return true;
@@ -480,7 +480,7 @@ export function entryShell() {
     <main class="entry-shell ${state.entryReady ? 'login-ready' : 'loading'}">
       <section class="entry-stage" aria-label="Abertura do sistema">
         <div class="entry-art">
-          <img src="/assets/images/maos-que-protegem-pessoas.png" alt="Maos que Protegem">
+          <img src="assets/images/maos-que-protegem-pessoas.png" alt="Maos que Protegem">
         </div>
         <div class="entry-phrases" aria-live="polite">
           <span class="entry-phrase" data-entry-phrase>${esc(entrySequence[0])}</span>
@@ -489,7 +489,7 @@ export function entryShell() {
       </section>
       <section class="login-panel" aria-label="Entrar no sistema">
         <div class="login-panel-brand" aria-hidden="true">
-          <img src="/assets/images/maos-que-protegem-pessoas.png" alt="">
+          <img src="assets/images/maos-que-protegem-pessoas.png" alt="">
         </div>
         ${authCard()}
       </section>
@@ -505,7 +505,7 @@ export function authCard() {
 export function loginCard() {
   return `<form class="login-card" id="login-form">
     <div class="login-card-head">
-      <img class="login-logo" src="/assets/logos/maos-que-protegem-logo.png" alt="Maos que Protegem">
+      <img class="login-logo" src="assets/logos/maos-que-protegem-logo.png" alt="Maos que Protegem">
       <div>
         <strong>Entrar</strong>
         <small>Acesso restrito a usuarios cadastrados e autorizados.</small>
@@ -527,7 +527,7 @@ export function loginCard() {
 export function registerCard() {
   return `<form class="login-card register-card" id="register-form">
     <div class="login-card-head">
-      <img class="login-logo" src="/assets/logos/maos-que-protegem-logo.png" alt="Maos que Protegem">
+      <img class="login-logo" src="assets/logos/maos-que-protegem-logo.png" alt="Maos que Protegem">
       <div>
         <strong>Criar acesso</strong>
         <small>O cadastro entra pendente para liberacao do administrador tecnico.</small>
@@ -546,7 +546,7 @@ export function registerCard() {
 export function pendingAccessCard(profile) {
   return `<section class="login-card pending-card">
     <div class="login-card-head">
-      <img class="login-logo" src="/assets/logos/maos-que-protegem-logo.png" alt="Maos que Protegem">
+      <img class="login-logo" src="assets/logos/maos-que-protegem-logo.png" alt="Maos que Protegem">
       <div>
         <strong>Aguardando</strong>
         <small>Cadastro recebido. O administrador tecnico precisa liberar perfil e unidade.</small>

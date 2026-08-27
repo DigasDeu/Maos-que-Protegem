@@ -219,7 +219,7 @@ function renderFailure(error) {
   document.body.classList.remove('modal-open');
   app.innerHTML = `<main class="render-failure">
     <section>
-      <img src="/assets/logos/maos-que-protegem-logo.png" alt="">
+      <img src="assets/logos/maos-que-protegem-logo.png" alt="">
       <h1>O sistema encontrou uma falha de tela.</h1>
       <p>Nada foi apagado. Atualize a pagina ou volte para o Dashboard para continuar.</p>
       <div>
@@ -246,7 +246,7 @@ function shell(visible) {
       <button class="sidebar-scrim" data-action="close-sidebar" aria-label="Fechar menu"></button>
       <aside class="sidebar pec55-sidebar" aria-label="Navegacao principal">
         <div class="brand product-card product-card-clean">
-          <img src="/assets/logos/maos-que-protegem-logo.png" alt="Maos que Protegem">
+          <img src="assets/logos/maos-que-protegem-logo.png" alt="Maos que Protegem">
           <div>
             <strong>Rede Protege Maues</strong>
           </div>
