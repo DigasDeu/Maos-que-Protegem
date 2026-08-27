@@ -252,7 +252,7 @@ as $$
   select public.current_role() = 'admin'
 $$;
 
-create or replace function public.can_access_protocol(row public.protocolos)
+create or replace function public.can_access_protocol(protocol_row public.protocolos)
 returns boolean
 language sql
 stable
@@ -261,9 +261,9 @@ set search_path = public
 as $$
   select
     public.is_admin()
-    or public.current_role() = any(row.visible_to_roles)
-    or public.current_unit_id() = any(row.visible_to_units)
-    or auth.uid()::text = any(row.access_grants)
+    or public.current_role() = any(protocol_row.visible_to_roles)
+    or public.current_unit_id() = any(protocol_row.visible_to_units)
+    or auth.uid()::text = any(protocol_row.access_grants)
     or public.current_role() = 'supervisor_caso'
 $$;
 
