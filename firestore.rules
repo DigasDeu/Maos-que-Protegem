@@ -1,0 +1,316 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function userPath(uid) { return /databases/$(database)/documents/usuarios/$(uid); }
+    function userExists() { return signedIn() && exists(userPath(request.auth.uid)); }
+    function userDoc() { return get(userPath(request.auth.uid)); }
+    function activeUser() { return userExists() && userDoc().data.active == true; }
+    function role() { return activeUser() ? userDoc().data.role : 'public'; }
+    function unitId() { return activeUser() ? userDoc().data.unitId : null; }
+    function admin() { return role() == 'admin'; }
+    function supervisor() { return role() == 'supervisor_caso'; }
+    function bootstrapAdminEmail() { return request.auth.token.email == 'diegofernandosilva.10@gmail.com'; }
+    function manager() { return role() in ['admin', 'gestor']; }
+    function operational() { return role() in ['entrada', 'conselho', 'samic', 'rede', 'vigilancia', 'supervisor_caso', 'autoridade_policial', 'policia_civil', 'policia_federal', 'gerente_ubs', 'gerente_casai', 'gerente_cras', 'gerente_sejel']; }
+    function caseActor() { return role() in ['entrada', 'conselho', 'samic', 'rede', 'vigilancia', 'supervisor_caso', 'autoridade_policial', 'policia_civil', 'policia_federal']; }
+    function specialized() { return role() in ['supervisor_caso', 'conselho', 'samic', 'autoridade_policial', 'policia_civil', 'policia_federal']; }
+    function notificationManager() { return role() in ['entrada', 'conselho', 'samic', 'rede', 'autoridade_policial', 'policia_civil', 'policia_federal', 'gerente_ubs', 'gerente_casai', 'gerente_cras', 'gerente_sejel']; }
+    function protocolPath(protocolId) { return /databases/$(database)/documents/protocolos/$(protocolId); }
+    function protocolExists(protocolId) { return exists(protocolPath(protocolId)); }
+    function protocolDoc(protocolId) { return get(protocolPath(protocolId)); }
+    function hasProtocolRole(protocol) { return protocol.data.visibleToRoles is list && protocol.data.visibleToRoles.hasAny([role()]); }
+    function hasProtocolUnit(protocol) { return unitId() != null && protocol.data.visibleToUnits is list && protocol.data.visibleToUnits.hasAny([unitId()]); }
+    function directlyAssigned(protocol) { return unitId() != null && (protocol.data.originUnitId == unitId() || protocol.data.currentUnitId == unitId()); }
+    function caseGrantPath(protocolId, grantId) { return /databases/$(database)/documents/acessosCaso/$(protocolId)/grants/$(grantId); }
+    function hasCaseGrant(protocolId, permission) {
+      return signedIn()
+        && exists(caseGrantPath(protocolId, request.auth.uid))
+        && get(caseGrantPath(protocolId, request.auth.uid)).data.active == true
+        && get(caseGrantPath(protocolId, request.auth.uid)).data.permissions is list
+        && get(caseGrantPath(protocolId, request.auth.uid)).data.permissions.hasAny([permission, 'total']);
+    }
+    function canReadOperationalCase(protocolId) {
+      return activeUser()
+        && protocolExists(protocolId)
+        && (
+          admin()
+          || hasProtocolRole(protocolDoc(protocolId))
+          || hasProtocolUnit(protocolDoc(protocolId))
+          || directlyAssigned(protocolDoc(protocolId))
+          || hasCaseGrant(protocolId, 'conteudo_minimo')
+        );
+    }
+    function canReadProtectedCase(protocolId, permission) {
+      return activeUser()
+        && caseActor()
+        && protocolExists(protocolId)
+        && (
+          hasCaseGrant(protocolId, permission)
+          || hasCaseGrant(protocolId, 'supervisao')
+        );
+    }
+    function noForbiddenCaseFields() {
+      return !request.resource.data.keys().hasAny([
+        'nomeCompleto',
+        'protectedName',
+        'cpf',
+        'rg',
+        'endereco',
+        'enderecoCompleto',
+        'address',
+        'contato',
+        'contact',
+        'responsavel',
+        'guardian',
+        'anexos',
+        'attachments',
+        'base64',
+        'fileUrl',
+        'downloadUrl',
+        'storagePath'
+      ]);
+    }
+    function protocolShape() {
+      return request.resource.data.keys().hasOnly([
+        'id',
+        'number',
+        'entryPoint',
+        'originUnitId',
+        'priority',
+        'classification',
+        'violenceType',
+        'ageRange',
+        'sex',
+        'initials',
+        'triggerReason',
+        'immediateAction',
+        'immediateProtection',
+        'statusCode',
+        'status',
+        'stage',
+        'currentOwner',
+        'currentUnitId',
+        'createdAt',
+        'updatedAt',
+        'deadlineAt',
+        'councilAcknowledgedAt',
+        'council',
+        'minimalRecord',
+        'sinan',
+        'sipia',
+        'samic',
+        'lastForwardId',
+        'closure',
+        'closedAt',
+        'reopen',
+        'reopenedAt',
+        'timeline',
+        'visibleToRoles',
+        'visibleToUnits',
+        'accessGrants'
+      ]);
+    }
+    function statsShape() {
+      return request.resource.data.keys().hasOnly([
+        'id',
+        'number',
+        'originUnitId',
+        'entryPoint',
+        'priority',
+        'classification',
+        'violenceType',
+        'ageRange',
+        'statusCode',
+        'status',
+        'stage',
+        'currentOwner',
+        'createdAt',
+        'updatedAt'
+      ]);
+    }
+    function userProfileShape() {
+      return request.resource.data.keys().hasOnly([
+        'id',
+        'email',
+        'name',
+        'role',
+        'unitId',
+        'active',
+        'liberation',
+        'requestedUnit',
+        'provider',
+        'emailVerified',
+        'createdAt',
+        'updatedAt'
+      ]);
+    }
+    function ownPendingUser(uid) {
+      return signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.id == uid
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.role == 'pending'
+        && request.resource.data.active == false
+        && request.resource.data.liberation == 'pendente'
+        && userProfileShape();
+    }
+    function ownBootstrapAdmin(uid) {
+      return signedIn()
+        && request.auth.uid == uid
+        && bootstrapAdminEmail()
+        && request.resource.data.id == uid
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.role == 'admin'
+        && request.resource.data.unitId == 'rede'
+        && request.resource.data.active == true
+        && request.resource.data.liberation == 'liberado'
+        && userProfileShape();
+    }
+
+    match /usuarios/{uid} {
+      allow read: if admin() || (signedIn() && request.auth.uid == uid);
+      allow create: if ownPendingUser(uid) || ownBootstrapAdmin(uid) || (admin() && userProfileShape());
+      allow update: if ownBootstrapAdmin(uid) || (admin() && userProfileShape());
+      allow delete: if false;
+    }
+
+    match /unidades/{id} {
+      allow read: if activeUser();
+      allow create, update: if admin()
+        && request.resource.data.keys().hasOnly(['id', 'name', 'acronym', 'sector', 'institutionType', 'serviceType', 'entryType', 'type', 'participation', 'serviceLevel', 'sparkQueryGroup', 'address', 'latitude', 'longitude', 'mapLink', 'email', 'phone', 'workingDays', 'workingHours', 'responsible', 'alternateContact', 'offHoursGuidance', 'active', 'notes', 'updatedAt']);
+      allow delete: if false;
+    }
+
+    match /protocolos/{protocolId} {
+      allow read: if canReadOperationalCase(protocolId);
+      allow create: if activeUser()
+        && operational()
+        && protocolShape()
+        && noForbiddenCaseFields()
+        && request.resource.data.originUnitId == unitId();
+      allow update: if activeUser()
+        && operational()
+        && protocolShape()
+        && noForbiddenCaseFields()
+        && (
+          resource.data.currentUnitId == unitId()
+          || resource.data.originUnitId == unitId()
+          || hasProtocolRole(resource)
+          || hasProtocolUnit(resource)
+          || hasCaseGrant(protocolId, 'conteudo_minimo')
+        );
+      allow delete: if false;
+    }
+
+    match /casos/{caseId} {
+      allow read: if canReadOperationalCase(caseId);
+      allow create, update: if activeUser()
+        && operational()
+        && request.resource.data.keys().hasOnly(['id', 'protocolId', 'number', 'originUnitId', 'entryPoint', 'priority', 'classification', 'violenceType', 'ageRange', 'sex', 'initials', 'statusCode', 'status', 'stage', 'currentOwner', 'currentUnitId', 'createdAt', 'updatedAt', 'deadlineAt', 'visibleToRoles', 'visibleToUnits'])
+        && noForbiddenCaseFields();
+      allow delete: if false;
+    }
+
+    match /pessoasProtegidas/{caseId} {
+      allow read: if canReadProtectedCase(caseId, 'identificacao');
+      allow create, update: if canReadProtectedCase(caseId, 'identificacao')
+        && request.resource.data.keys().hasOnly(['id', 'caseId', 'nome', 'dataNascimento', 'endereco', 'responsaveis', 'contato', 'updatedAt']);
+      allow delete: if false;
+    }
+
+    match /conteudoSensivel/{caseId} {
+      allow read: if canReadProtectedCase(caseId, 'sensivel');
+      allow create, update: if canReadProtectedCase(caseId, 'sensivel')
+        && request.resource.data.keys().hasOnly(['id', 'caseId', 'relato', 'observacoesProtegidas', 'informacoesRestritas', 'updatedAt']);
+      allow delete: if false;
+    }
+
+    match /acessosCaso/{caseId}/grants/{grantId} {
+      allow read: if activeUser() && (admin() || supervisor() || request.auth.uid == grantId);
+      allow create, update: if activeUser()
+        && (admin() || supervisor())
+        && request.resource.data.keys().hasOnly(['id', 'caseId', 'actorId', 'unitId', 'permissions', 'reason', 'active', 'startsAt', 'expiresAt', 'createdAt', 'updatedAt'])
+        && request.resource.data.caseId == caseId;
+      allow delete: if false;
+    }
+
+    match /estatisticasProtocolos/{protocolId} {
+      allow read: if activeUser() && (manager() || role() in ['referencia_saude_crianca', 'conselho', 'samic', 'autoridade_policial', 'policia_civil', 'policia_federal', 'vigilancia']);
+      allow create, update: if activeUser()
+        && operational()
+        && statsShape()
+        && noForbiddenCaseFields();
+      allow delete: if false;
+    }
+
+    match /encaminhamentos/{forwardId} {
+      allow read: if activeUser()
+        && (
+          admin()
+          || resource.data.originUnitId == unitId()
+          || resource.data.destinationUnitId == unitId()
+          || (resource.data.visibleToRoles is list && resource.data.visibleToRoles.hasAny([role()]))
+          || (resource.data.visibleToUnits is list && resource.data.visibleToUnits.hasAny([unitId()]))
+          || hasCaseGrant(resource.data.protocolId, 'conteudo_minimo')
+        );
+      allow create: if activeUser()
+        && operational()
+        && request.resource.data.keys().hasOnly(['id', 'protocolId', 'number', 'originUnitId', 'destination', 'destinationUnitId', 'destinationType', 'visibleToRoles', 'visibleToUnits', 'status', 'objective', 'createdAt', 'updatedAt', 'deadlineAt', 'acceptedAt', 'returnedAt', 'redirectedAt', 'attendanceAt', 'feedbackAt', 'closedAt', 'returnJustification', 'redirectJustification', 'attendanceNote', 'feedback'])
+        && canReadOperationalCase(request.resource.data.protocolId);
+      allow update: if activeUser()
+        && (resource.data.destinationUnitId == unitId() || specialized() || hasCaseGrant(resource.data.protocolId, 'conteudo_minimo'))
+        && request.resource.data.keys().hasOnly(['id', 'protocolId', 'number', 'originUnitId', 'destination', 'destinationUnitId', 'destinationType', 'visibleToRoles', 'visibleToUnits', 'status', 'objective', 'createdAt', 'updatedAt', 'deadlineAt', 'acceptedAt', 'returnedAt', 'redirectedAt', 'attendanceAt', 'feedbackAt', 'closedAt', 'returnJustification', 'redirectJustification', 'attendanceNote', 'feedback']);
+      allow delete: if false;
+    }
+
+    match /notificacoes/{id} {
+      allow read: if activeUser()
+        && (
+          resource.data.userId == request.auth.uid
+          || resource.data.userId == unitId()
+          || resource.data.targetRole == role()
+          || resource.data.unitId == unitId()
+          || admin()
+        );
+      allow create: if activeUser()
+        && notificationManager()
+        && request.resource.data.keys().hasOnly(['id', 'userId', 'targetRole', 'type', 'title', 'message', 'read', 'createdAt', 'protocolId', 'unitId', 'sentAt', 'deliveredAt', 'readAt', 'attempts', 'escalation', 'status']);
+      allow update: if activeUser()
+        && (
+          resource.data.userId == request.auth.uid
+          || resource.data.userId == unitId()
+          || resource.data.targetRole == role()
+          || resource.data.unitId == unitId()
+          || admin()
+        )
+        && request.resource.data.keys().hasOnly(['id', 'userId', 'targetRole', 'type', 'title', 'message', 'read', 'createdAt', 'protocolId', 'unitId', 'sentAt', 'deliveredAt', 'readAt', 'attempts', 'escalation', 'status']);
+      allow delete: if false;
+    }
+
+    match /notificacoes/{uid}/itens/{id} {
+      allow read, update: if signedIn() && request.auth.uid == uid;
+      allow create: if activeUser()
+        && notificationManager()
+        && request.resource.data.keys().hasOnly(['id', 'userId', 'title', 'message', 'read', 'createdAt', 'protocolId']);
+      allow delete: if false;
+    }
+
+    match /auditoria/{id} {
+      allow read: if activeUser() && manager();
+      allow create: if activeUser()
+        && request.resource.data.keys().hasOnly(['id', 'actorId', 'action', 'target', 'caseId', 'resource', 'authorized', 'at', 'unitId', 'meta']);
+      allow update, delete: if false;
+    }
+
+    match /configuracoes/{id} {
+      allow read: if activeUser();
+      allow create, update: if admin();
+      allow delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

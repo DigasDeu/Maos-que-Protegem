@@ -1,0 +1,82 @@
+Estrutura atual de pastas e arquivos
+Gerado em: 2026-08-27
+Raiz: C:\Users\Digas - SEMSA\Documents\Mãos que protegem
+
+Mãos que protegem/
+|-- .firebase/
+|   +-- hosting.cHVibGlj.cache
+|-- deploy/
+|   +-- README.md
+|-- public/
+|   |-- administracao/
+|   |   +-- administracao.html
+|   |-- assets/
+|   |   |-- icons/
+|   |   |   +-- README.md
+|   |   |-- images/
+|   |   |   +-- maos-que-protegem-pessoas.png
+|   |   +-- logos/
+|   |       |-- maos-que-protegem-logo.png
+|   |       +-- rede-protege-logo.svg
+|   |-- conselho/
+|   |   |-- acionar-samic.html
+|   |   |-- confirmar-ciencia.html
+|   |   +-- registro-sipia.html
+|   |-- conselho-tutelar/
+|   |   +-- conselho.html
+|   |-- css/
+|   |   |-- styles.css
+|   |   +-- variables.css
+|   |-- encaminhamentos/
+|   |   |-- autoridade-policial.html
+|   |   |-- concluir.html
+|   |   |-- creas.html
+|   |   |-- devolutiva.html
+|   |   |-- dip.html
+|   |   |-- encaminhamentos.html
+|   |   |-- hospital-savvis.html
+|   |   |-- ministerio-publico.html
+|   |   +-- ubs.html
+|   |-- js/
+|   |   |-- administracao.js
+|   |   |-- app.js
+|   |   |-- auth.js
+|   |   |-- dashboard.js
+|   |   |-- encaminhamentos.js
+|   |   |-- firebase-config.js
+|   |   |-- fluxo.js
+|   |   |-- notificacoes.js
+|   |   +-- protocolos.js
+|   |-- protocolos/
+|   |   |-- detalhes-protocolo.html
+|   |   |-- novo-protocolo.html
+|   |   +-- protocolos.html
+|   |-- samic/
+|   |   |-- confirmar-recebimento.html
+|   |   |-- samic.html
+|   |   +-- tomada-de-decisao.html
+|   |-- dashboard.html
+|   |-- encaminhar-conselho.html
+|   |-- index.html
+|   +-- login.html
+|-- scripts/
+|-- supabase/
+|   |-- .temp/
+|   |   +-- cli-latest
+|   |-- functions/
+|   |   +-- README.md
+|   |-- migrations/
+|   |   +-- 20260824130000_initial_rede_protege_schema.sql
+|   |-- config.toml
+|   |-- README.md
+|   +-- seed.sql
+|-- .env.example
+|-- .firebaserc
+|-- .gitignore
+|-- firebase.json
+|-- firestore.indexes.json
+|-- firestore.rules
+|-- netlify.toml
+|-- package.json
+|-- README.md
++-- vercel.json

@@ -1,0 +1,15 @@
+{
+  "name": "rede-protege-maues",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "serve": "npx http-server public -p 4173 -c-1",
+    "supabase:login": "npx supabase login",
+    "supabase:link": "npx supabase link --project-ref ukjcjzijhakkxnerbvid",
+    "supabase:db:push": "npx supabase db push",
+    "deploy:firebase": "npx firebase deploy --only hosting"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}
